@@ -1,0 +1,56 @@
+---
+title: "Class 14: RNASeq Mini-Project"
+author: "Tonhi Dinh (A18508020)"
+format: html
+---
+
+##Background
+
+Our Data for today comes from a HOX gene knock-out study
+
+> Trapnell C, Hendrickson DG, Sauvageau M, Goff L et al. "Differential analysis of gene regulation at transcript resolution with RNA-seq". Nat Biotechnol 2013 Jan;31(1):46-53. PMID: 23222703
+
+The authors report on differential analysis of lung fibroblasts in response to loss of the developmental transcription factor HOXA1. 
+
+## Data Import
+
+We have 2 keyinput files: counts and metadata.
+
+```{r}
+countData <- read.csv("GSE37704_featurecounts.csv")
+colData <- read.csv("GSE37704_metadata.csv")
+```
+
+```{r}
+head(countData)
+```
+
+We need to remove the first lenght column from `countdata` to have a 1:1 corespondents with `colDAta` rows.
+
+```{r}
+countData <- countData[,-1]
+```
+
+```{r}
+rownames(colData) == colnames(countData)
+```
+
+
+### Check and Tidy
+
+
+
+## Setup for DESeq
+
+
+
+### Run DESeq
+
+
+
+### Get results
+
+
+
+
+## Volcano plot

@@ -1,0 +1,204 @@
+---
+title: "Class 11: Alpha Fold"
+author: "Tonhi Dinh (A18508020)"
+format: pdf
+toc: TRUE
+---
+
+## Background
+
+We saw last day that the main repository of biomolecular structure (the PDB database) onoly has ~250,000 entries.
+
+UnitProtKB (the main protein sequence database) has over 200 Million entries
+
+In this hands-on session we will utilize AlphaFold to predict protein structure from sequence (Jumper et al. 2021).
+
+Without the aid of such approaches, it can take years of expensive laboratory work to determine the structure of just one protein. With AlphaFold we can now accurately compute a typical protein structure in as little as ten minutes.
+
+## The EBI Alphafold Database
+
+The EBI alphafold database contains alots of computed structure models. It is increasingly likely that the structure you are interested in is already in this database at <https://alphafold.ebi.ac.uk>
+
+There are three major outputs from Alphafold
+
+1. A model of structure in **PDB** format
+2. A **plDDt score**: that tells us how confident the model is for a given residue in your protein (high value is good, above 70)
+3. A **PAE score** that tells us about protein packing quality
+
+If you can't find a matching entry for the sequence you are interested in AFDB you can run Alphafold yourself...
+
+## Running Alphafold
+
+We will use Colabfold to run Alphafold on our sequence <https://github.com/sokrypton/ColabFold?tab=readme-ov-file>
+
+Figure from Alphafold here!
+
+## Interpreting Results
+
+Custom analysis of resulting models
+
+We can read all the Alphafold results into R and do more quantitative analysis than just viewing the structures in Mol-star:
+
+Read all the PDB models
+```{r}
+library(bio3d)
+
+```
+
+```{r}
+pdb_files <- list.files("hivpr_23119/", pattern = ".pdb", full.names = TRUE)
+pdb_files
+```
+
+
+```{r}
+library(bio3dview)
+pdbs <- pdbaln(pdb_files, fit = TRUE, exefile = "msa")
+view.pdbs(pdbs)
+```
+
+```{r}
+# Quick view of model sequence
+pdbs
+```
+
+
+```{r}
+rd <- rmsd(pdbs, fit=T)
+```
+
+```{r}
+range(rd)
+```
+
+
+```{r}
+library(pheatmap)
+
+colnames(rd) <- paste0("m",1:5)
+rownames(rd) <- paste0("m",1:5)
+pheatmap(rd)
+
+```
+
+
+```{r}
+# Read a reference PDB structure
+pdb <- read.pdb("1hsg")
+```
+Obtain secondary structure from a call to stride() or dssp() on any of the model structures.
+
+```{r}
+plotb3(pdbs$b[1,], typ="l", lwd=2, sse=pdb)
+points(pdbs$b[2,], typ="l", col="pink3")
+points(pdbs$b[3,], typ="l", col="steelblue")
+points(pdbs$b[4,], typ="l", col="darkseagreen")
+points(pdbs$b[5,], typ="l", col="salmon2")
+abline(v=100, col="gray")
+```
+
+We can improve the superposition/fitting of our models by finding the most consistent “rigid core” common across all the models. For this we will use the core.find() function:
+
+```{r}
+core <- core.find(pdbs)
+```
+
+
+We can now use the identified core atom positions as a basis for a more suitable superposition and write out the fitted structures to a directory called corefit_structures:
+
+```{r}
+core.inds <- print(core, vol=0.5)
+```
+
+```{r}
+xyz <- pdbfit(pdbs, core.inds, outpath="corefit_structures")
+```
+
+Now we can examine the RMSF between positions of the structure. RMSF is an often used measure of conformational variance along the structure:
+
+```{r}
+rf <- rmsf(xyz)
+
+plotb3(rf, sse=pdb)
+abline(v=100, col="cadetblue", ylab="RMSF")
+```
+
+## Predicted Alignment Error for Domains
+
+```{r}
+library(jsonlite)
+
+# Listing of all PAE JSON files
+pae_files <- list.files(path="hivpr_23119/",
+                        pattern=".*model.*\\.json",
+                        full.names = TRUE)
+```
+
+```{r}
+pae1 <- read_json(pae_files[1],simplifyVector = TRUE)
+pae5 <- read_json(pae_files[5],simplifyVector = TRUE)
+
+attributes(pae1)
+```
+
+```{r}
+# Per-residue pLDDT scores 
+#  same as B-factor of PDB..
+head(pae1$plddt) 
+```
+
+```{r}
+pae1$max_pae
+```
+
+```{r}
+pae5$max_pae
+```
+
+We can plot the N by N (where N is the number of residues) PAE scores with ggplot or with functions from the Bio3D package:
+```{r}
+plot.dmat(pae1$pae, 
+          xlab="Residue Position (i)",
+          ylab="Residue Position (j)")
+```
+
+```{r}
+plot.dmat(pae5$pae, 
+          xlab="Residue Position (i)",
+          ylab="Residue Position (j)",
+          grid.col = "black",
+          zlim=c(0,30))
+```
+
+```{r}
+#We should really plot all of these using the same z range. Here is the model 1 plot again but this time using the same data range as the plot for model 5:
+
+plot.dmat(pae1$pae, 
+          xlab="Residue Position (i)",
+          ylab="Residue Position (j)",
+          grid.col = "black",
+          zlim=c(0,30))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
