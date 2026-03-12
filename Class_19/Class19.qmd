@@ -16,7 +16,7 @@ From a **BLASTp** searach against human refseq I see that it is:
 ```{r}
 library(bio3d)
 
-seq <- read.fasta("A18508020_mutant_seq.fa")
+seq <- read.fasta("./Class 19/A18508020_mutant_seq.fa")
 seq
 ```
 
@@ -75,7 +75,7 @@ Chain B, Serine/threonine-protein kinase B-raf [Homo sapiens]
 
 - E-value: 0.0
 
-![](4MNE.png)
+![](4MNE copy.png)
 
 
 > Q7. [10pts] Using AlphaFold notebook generate a structural model using the default parameters for your mutant sequence.
